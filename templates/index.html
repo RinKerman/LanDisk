@@ -1,0 +1,148 @@
+<html>
+<head>
+    <script src="static/elemeui/vue.js"></script>
+    <script src="static/elemeui/axios.min.js"></script>
+    <link rel="stylesheet" href="static/elemeui/index.css">
+
+    <script src="static/elemeui/index.js"></script>
+    <style>
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            background-color: #f3f3f3;
+        }
+
+        html, body, #app,.el-table, .el-upload  {
+            width: 100%;
+        }
+        .el-upload{
+            height: 100%;
+        }
+
+        #app > *{
+            background-color: #f3f3f3;
+        }
+
+        .el-upload-dragger {
+            background: rgba(0,0,0,0);
+            width: auto;
+            height: auto;
+            border: 0;
+        }
+    </style>
+
+</head>
+<body>
+<div id="app" style="width: 90%;
+    padding-left: 5%;">
+    <div>
+        <i v-if="dir.length > 0" style="font-size: 21px;
+            cursor: pointer;
+            border: 2px solid #edebeb;
+            border-radius: 99px;
+            color: gray;
+            box-shadow: rgb(158 158 158) 2px 4px 7px 0px;"
+            class="el-icon-back"
+            @click="stepBack"></i>
+        <p style="display:inline-block; font-size: 20px;color: #5a5a5a; margin-top: 20px">目录: [[dir]]</p>
+    </div>
+    <el-dialog title="编辑" :visible.sync="editVis">
+        新文件名：
+        <el-input v-model="input"></el-input>
+        <span slot="footer" class="dialog-footer">
+            <el-button @click="editVis = false">取 消</el-button>
+            <el-button type="primary" @click="doEditFileNm">确 定</el-button>
+        </span>
+    </el-dialog>
+
+    <el-dialog title="新建文件夹" :visible.sync="createFolderVis">
+        文件夹名称：
+        <el-input v-model="newFolderName"></el-input>
+        <span slot="footer" class="dialog-footer">
+            <el-button @click="createFolderVis = false">取 消</el-button>
+            <el-button type="primary" @click="doCreateFolder">确 定</el-button>
+        </span>
+    </el-dialog>
+
+    <el-table
+            :data="fileData"
+            style="width: 100%">
+        <el-table-column label="文件名">
+            <template slot-scope="scope">
+                <p v-if="!scope.row.isDir" @dblclick="handleDownload(scope.row)">[[ scope.row.fileName ]]</p>
+                <p v-else @click="goToDir(scope.row.fileName)" style="color: blue;cursor: pointer">[[ scope.row.fileName]]</p>
+            </template>
+        </el-table-column>
+
+        <el-table-column label="大小">
+            <template slot-scope="scope">
+                <p v-if="!scope.row.isDir">[[ scope.row.size ]]</p>
+            </template>
+        </el-table-column>
+
+        <el-table-column label="日期">
+            <template slot-scope="scope">
+                <i class="el-icon-time"></i>
+                <span style="margin-left: 10px">[[ scope.row.chgTime ]]</span>
+            </template>
+        </el-table-column>
+
+
+        <el-table-column label="操作">
+            <template slot-scope="scope">
+                <el-button v-if="!scope.row.isDir"
+                        type="primary" round
+                        size="mini"
+                        @click="handleDownload(scope.row)">下载
+                </el-button>
+
+                <el-button
+                        type="warning" round
+                        size="mini"
+                        @click="handleEdit(scope.row)">编辑
+                </el-button>
+
+                <el-button
+                        type="danger" round
+                        size="mini"
+                        @click="handleDelete(scope.row)">删除
+                </el-button>
+
+            </template>
+        </el-table-column>
+    </el-table>
+
+    <div style="width: 10rem; height: 6rem; line-height: 4rem; position: absolute; left: 1rem; bottom: 1rem; border-radius: 10px; box-shadow: 5px 8px 15px 1px #b5b4b4;">
+        <el-upload style="width: 100%; height: 100%"
+                   :action="'upload?dir=' + currDir"
+                   drag
+                   :show-file-list="false"
+                   :on-success="handleSuccess"
+                   :on-error="handleError"
+                   style="display: inline-block;width:58px;">
+            <p>上传</p>
+        </el-upload>
+    </div>
+
+    <div style="width: 10rem;
+        height: 6rem;
+        line-height: 4rem;
+        position: absolute;
+        left: 12rem;
+        bottom: 1rem;
+        border-radius: 10px;
+        text-align: center;
+        cursor: pointer;
+        box-shadow: 5px 8px 15px 1px #b5b4b4;"
+         @click="handleCreateFolder">
+            <p>新建文件夹</p>
+    </div>
+
+</div>
+
+<script src="static/index.js"></script>
+<script>app.dir = "{{curDir}}"</script>
+</body>
+
+</html>
