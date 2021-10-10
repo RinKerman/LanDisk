@@ -1,5 +1,5 @@
 # LanDisk
- Based on Python flash Vue element-ui
+ Based on Python flask Vue element-ui
  
  A simple tool developed to solve the problem of file transmission between different devices in the same LAN
  
