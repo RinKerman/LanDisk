@@ -4,7 +4,11 @@ import time
 from src.tools import format_file_size
 
 app = Flask(__name__)
-FILE_DIR = os.path.dirname(__file__) + '\\files'
+
+FILE_DIR = os.path.join(os.path.dirname(__file__), 'files')
+
+if not os.path.exists(FILE_DIR):
+	os.path.mkdir(FILE_DIR)
 print(FILE_DIR)
 
 
