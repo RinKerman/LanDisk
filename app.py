@@ -1,22 +1,55 @@
-from flask import Flask, send_from_directory, render_template, request, Response, abort
+import json
+
+from flask import Flask, send_file, render_template, request, abort
 import os
 import time
+import redis
 from src.tools import format_file_size
 
 app = Flask(__name__)
 
-FILE_DIR = os.path.join(os.path.dirname(__file__), 'files')
+redis_cli = redis.Redis(host='localhost', port=6379, decode_responses=True)
+
+if redis_cli.get('tags') is None:
+    redis_cli.set('tags', json.dumps([]))
+BASE_DIR = os.path.dirname(__file__)
+FILE_DIR = os.path.join(BASE_DIR, 'files')
 
 if not os.path.exists(FILE_DIR):
-	os.path.mkdir(FILE_DIR)
-print(FILE_DIR)
+    os.mkdir(FILE_DIR)
 
 
-@app.route('/download')
-def download():
-    return send_from_directory(os.path.join(FILE_DIR, request.args['dir'].replace("$.$", "\\")),
-                               request.args["fileName"])
+@app.route('/favicon.ico')
+def favicon():
+    return app.send_static_file('img/tag.webp')
 
+
+@app.route('/getTags')
+def get_tags():
+    return {'tags': json.loads(redis_cli.get('tags'))}
+
+
+@app.route('/addTag', methods=['POST'])
+def add_tag():
+    new_tag = request.json.get('tag')
+    tags = json.loads(redis_cli.get('tags'))
+    if new_tag not in tags:
+        tags.append(new_tag)
+        redis_cli.set('tags', json.dumps(tags))
+        return 'ok'
+    else:
+        abort(400)
+
+
+@app.route('/rmTag', methods=['POST'])
+def rm_tag():
+    target_tag = request.json.get('tag')
+    tags = json.loads(redis_cli.get('tags'))
+    if target_tag in tags:
+        tags.remove(target_tag)
+        redis_cli.set('tags', json.dumps(tags))
+    return 'ok'
+   
 
 @app.route('/upload', methods=['POST'])
 def upload():
@@ -24,7 +57,7 @@ def upload():
     if os.path.exists(path):
         return "文件已存在"
     request.files.get("file").save(path)
-    return "200"
+    return "ok"
 
 
 @app.route('/delete', methods=['POST'])
@@ -92,7 +125,12 @@ def create_dir():
 
 @app.route("/")
 def index():
-    return render_template('index.html', curDir='')
+    return render_template('disk.html', curDir='')
+
+
+@app.route("/tags")
+def tags_page():
+    return render_template('tags.html')
 
 
 if __name__ == '__main__':

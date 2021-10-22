@@ -1,0 +1,238 @@
+<html>
+<head>
+    <title>Tags</title>
+    <script src="static/elemeui/vue.js"></script>
+    <script src="static/elemeui/axios.min.js"></script>
+    <link rel="stylesheet" href="static/elemeui/index.css">
+
+    <script src="static/elemeui/index.js"></script>
+    <style>
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            background-color: #f3f3f3;
+            overflow:hidden;
+            overflow-y:auto;
+        }
+
+        span{
+            margin-right: 1rem;
+            word-break:normal;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        html, body, #app, .el-table, .el-upload {
+            width: 100%;
+        }
+
+        .el-tag {
+            margin-left: 10px;
+            background-color: #ecf5ff;
+            border-color: #d9ecff;
+            display: inline-block;
+            height: fit-content;
+            padding: 0 20px;
+            line-height: 4rem;
+            font-size: 2rem;
+            color: #409EFF;
+            border-width: 1px;
+            border-style: solid;
+            border-radius: 4px;
+            box-sizing: border-box;
+            white-space: nowrap;
+        }
+
+        .button-new-tag {
+            margin-left: 10px;
+            height: 4rem;
+            line-height: 27px;
+            font-size: 2rem;
+            padding: 20px;
+        }
+
+        .input-new-tag {
+            width: 54rem;
+            margin-left: 10px;
+            height: 4rem;
+            font-size: 2rem;
+        }
+
+        .el-input--small .el-input__inner {
+            height: 4rem;
+            line-height: 3rem;
+        }
+
+        .el-tag .el-icon-close{
+            font-size: 1.5rem;
+            color: #ff000070;
+            height: auto;
+            width: auto;
+            line-height: 1.5rem;
+        }
+        .tag-container{
+            margin-bottom: 20px;
+            display: inline-block
+        }
+
+
+        @media (max-width: 1000px){
+            .tag-container{
+                margin-bottom: 20px;
+                display: block;
+            }
+
+            .el-tag {
+                max-width: 54rem;
+                height: fit-content;
+                line-height: 6rem;
+                font-size: 4rem;
+                padding: 1rem 2rem 1rem 2rem;
+            }
+
+            .button-new-tag {
+                margin-left: 10px;
+                height: 8rem;
+                line-height: 27px;
+                font-size: 4rem;
+                padding: 2rem;
+            }
+
+            .input-new-tag {
+                width: 54rem;
+                margin-left: 10px;
+                height: 12rem;
+                font-size: 4rem;
+            }
+
+            .el-input--small .el-input__inner {
+                height: 8rem;
+                line-height: 3rem;
+            }
+
+            .el-tag .el-icon-close {
+                font-size: 5rem;
+                line-height: 6rem;
+                float: right;
+                position: relative;
+                right: 0;
+
+            }
+        }
+
+    </style>
+<body>
+
+<div id="app" style="width: 90%;
+    min-width: 1100px;
+    min-height: 560px;
+    padding-left: 5%;">
+    <div style="margin-top: 20px; ">
+        <div class="tag-container" v-for="tag in dynamicTags">
+            <el-tag :key="tag"
+                    closable
+                    :disable-transitions="false"
+                    @close="handleClose(tag)">
+                <a v-if="isHttp(tag)" :href="tag" target="_blank">[{ tag }]</a>
+                <span v-else>[{ tag }]</span>
+            </el-tag>
+        </div>
+
+        <el-input
+                class="input-new-tag"
+                v-if="inputVisible"
+                v-model="inputValue"
+                ref="saveTagInput"
+                size="small"
+                @keyup.enter.native="handleInputConfirm"
+                @blur="handleInputConfirm"
+        >
+        </el-input>
+        <el-button style="display: inline-block" v-else class="button-new-tag" size="small" @click="showInput">+ New Tag</el-button>
+
+    </div>
+</div>
+<script>
+
+
+    let app = new Vue({
+        el: '#app',
+        delimiters: ["[{", "}]"],
+        data: function () {
+            return {
+                flushEvnt: null,
+                dynamicTags: [],
+                inputVisible: false,
+                inputValue: '',
+            }
+        },
+
+        methods: {
+            isHttp: function (str) {
+                return str.startsWith("http://");
+            },
+            flushData: function () {
+                let self = this;
+                axios.get('/getTags')
+                    .then(function (response) {
+                        self.dynamicTags = response.data.tags;
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    });
+            },
+            handleClose(tag) {
+                let self = this;
+                axios.post('/rmTag', {tag: tag})
+                    .then(function () {
+                        self.flushData();
+                    }).catch(function (error) {
+                        self.flushData();
+                });
+            },
+
+            showInput() {
+                this.inputVisible = true;
+                this.$nextTick(_ => {
+                    this.$refs.saveTagInput.$refs.input.focus();
+                });
+            },
+
+            handleInputConfirm() {
+                let self = this;
+                let inputValue = this.inputValue;
+                if(inputValue.length){
+                    axios.post('/addTag', {'tag': inputValue})
+                        .then(function () {
+                            self.inputValue = '';
+                            self.inputVisible = false;
+                            self.flushData();
+                        }).catch(function (error) {
+                        self.$message({
+                            type: 'error',
+                            message: '新增失败（请检查该内容是否已存在）'
+                        });
+                    });
+                }else{
+                    self.inputValue = '';
+                    self.inputVisible = false;
+                }
+
+            }
+        },
+        mounted: function () {
+            let self = this;
+            self.flushData();
+
+            self.flushEvnt = setInterval(function () {
+                self.flushData()
+            }, 5000);
+        }
+    });
+
+
+</script>
+
+</body>
+</html>
