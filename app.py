@@ -128,6 +128,11 @@ def index():
     return render_template('disk.html', curDir='')
 
 
+@app.route("/disk")
+def disk_page():
+    return render_template('disk.html', curDir='')
+
+
 @app.route("/tags")
 def tags_page():
     return render_template('tags.html')
