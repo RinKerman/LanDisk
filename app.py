@@ -5,10 +5,11 @@ import os
 import time
 import redis
 from src.tools import format_file_size, sort_tags_by_type
+from src.config import *
 
 app = Flask(__name__)
 
-redis_cli = redis.Redis(host='localhost', port=6379, decode_responses=True)
+redis_cli = redis.Redis(host=redis_host, port=redis_port, decode_responses=True)
 
 if redis_cli.get('tags') is None:
     redis_cli.set('tags', json.dumps([]))
