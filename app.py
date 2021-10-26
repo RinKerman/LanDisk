@@ -4,7 +4,7 @@ from flask import Flask, send_from_directory, render_template, request, abort
 import os
 import time
 import redis
-from src.tools import format_file_size
+from src.tools import format_file_size, sort_tags_by_type
 
 app = Flask(__name__)
 
@@ -41,6 +41,8 @@ def add_tag():
     tags = json.loads(redis_cli.get('tags'))
     if new_tag not in tags:
         tags.append(new_tag)
+        tags = sorted(tags, key=len)
+        tags = sort_tags_by_type(tags)
         redis_cli.set('tags', json.dumps(tags))
         return 'ok'
     else:
