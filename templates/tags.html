@@ -12,13 +12,20 @@
             margin: 0;
             padding: 0;
             background-color: #f3f3f3;
-            overflow:hidden;
-            overflow-y:auto;
+            overflow: hidden;
+            overflow-y: auto;
         }
 
-        span{
+        a {
             margin-right: 1rem;
-            word-break:normal;
+            word-break: normal;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        span {
+            margin-right: 1rem;
+            word-break: normal;
             white-space: pre-wrap;
             word-wrap: break-word;
         }
@@ -42,6 +49,7 @@
             border-radius: 4px;
             box-sizing: border-box;
             white-space: nowrap;
+            max-width: 100%;
         }
 
         .button-new-tag {
@@ -64,21 +72,23 @@
             line-height: 3rem;
         }
 
-        .el-tag .el-icon-close{
+        .el-tag .el-icon-close {
             font-size: 1.5rem;
             color: #ff000070;
             height: auto;
             width: auto;
             line-height: 1.5rem;
         }
-        .tag-container{
+
+        .tag-container {
             margin-bottom: 20px;
-            display: inline-block
+            display: inline-block;
+            max-width: 100%;
         }
 
 
-        @media (max-width: 1000px){
-            .tag-container{
+        @media (max-width: 1000px) {
+            .tag-container {
                 margin-bottom: 20px;
                 display: block;
             }
@@ -86,34 +96,34 @@
             .el-tag {
                 max-width: 54rem;
                 height: fit-content;
-                line-height: 6rem;
-                font-size: 4rem;
-                padding: 1rem 2rem 1rem 2rem;
+                line-height: 4rem;
+                font-size: 2rem;
+                padding: 0.5rem 1rem 0.5rem 1rem;
             }
 
             .button-new-tag {
                 margin-left: 10px;
-                height: 8rem;
-                line-height: 27px;
-                font-size: 4rem;
+                height: 4rem;
+                line-height: 0.5rem;
+                font-size: 2rem;
                 padding: 2rem;
             }
 
             .input-new-tag {
                 width: 54rem;
                 margin-left: 10px;
-                height: 12rem;
-                font-size: 4rem;
+                height: 6rem;
+                font-size: 2rem;
             }
 
             .el-input--small .el-input__inner {
-                height: 8rem;
+                height: 4rem;
                 line-height: 3rem;
             }
 
             .el-tag .el-icon-close {
-                font-size: 5rem;
-                line-height: 6rem;
+                font-size: 2rem;
+                line-height: 4rem;
                 float: right;
                 position: relative;
                 right: 0;
