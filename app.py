@@ -1,6 +1,6 @@
 import json
 
-from flask import Flask, send_file, render_template, request, abort
+from flask import Flask, send_from_directory, render_template, request, abort
 import os
 import time
 import redis
@@ -17,6 +17,12 @@ FILE_DIR = os.path.join(BASE_DIR, 'files')
 
 if not os.path.exists(FILE_DIR):
     os.mkdir(FILE_DIR)
+
+
+@app.route('/download')
+def download():
+    return send_from_directory(os.path.join(FILE_DIR, request.args['dir'].replace("$.$", "\\")),
+                               request.args["fileName"])
 
 
 @app.route('/favicon.ico')
@@ -57,7 +63,7 @@ def upload():
     if os.path.exists(path):
         return "文件已存在"
     request.files.get("file").save(path)
-    return "ok"
+    return "200"
 
 
 @app.route('/delete', methods=['POST'])
@@ -70,7 +76,7 @@ def delete():
             abort(400)
     else:
         os.remove(file_dir)
-    return "ok"
+    return "200"
 
 
 @app.route('/edit', methods=['POST'])

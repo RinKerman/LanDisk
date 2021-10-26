@@ -93,7 +93,7 @@ let app = new Vue({
 
         },
         handleSuccess: function (res) {
-            if (res == 'ok') {
+            if (res == '200') {
                 this.$message({
                     message: '上传完成',
                     type: 'success'
