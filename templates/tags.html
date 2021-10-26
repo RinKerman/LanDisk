@@ -129,14 +129,22 @@
     min-height: 560px;
     padding-left: 5%;">
     <div style="margin-top: 20px; ">
-        <div class="tag-container" v-for="tag in dynamicTags">
-            <el-tag :key="tag"
+        <div class="tag-container" v-for="(tag,index) in dynamicTags" :style="{'display':isTodo(tag)?'block':'inline-block' }">
+            <el-tag v-if="editTagIndex != index" :key="tag"
                     closable
                     :disable-transitions="false"
                     @close="handleClose(tag)">
                 <a v-if="isHttp(tag)" :href="tag" target="_blank">[{ tag }]</a>
-                <span v-else>[{ tag }]</span>
+                <span v-else @dblclick="editTag(index)" :style="{'color':isTodo(tag)}" >[{ tag }]</span>
             </el-tag>
+            <el-input v-else
+                      class="input-new-tag"
+                      v-model="editValue"
+                      ref="saveTagEdit"
+                      size="small"
+                      @keyup.enter.native="handleEditConfirm"
+                      @blur="handleEditConfirm">
+            </el-input>
         </div>
 
         <el-input
@@ -146,8 +154,7 @@
                 ref="saveTagInput"
                 size="small"
                 @keyup.enter.native="handleInputConfirm"
-                @blur="handleInputConfirm"
-        >
+                @blur="handleInputConfirm">
         </el-input>
         <el-button style="display: inline-block" v-else class="button-new-tag" size="small" @click="showInput">+ New Tag</el-button>
 
@@ -161,16 +168,33 @@
         delimiters: ["[{", "}]"],
         data: function () {
             return {
+                todoReg:new RegExp(/^\s?((td)|(todo)):?：?\s?/, 'i'),
+                editTagIndex: null,
+                editValue:"",
                 flushEvnt: null,
                 dynamicTags: [],
                 inputVisible: false,
                 inputValue: '',
             }
         },
+        watch:{
+            inputValue(val,oldVal){
+
+                if(oldVal === "TODO: " && val === "TODO:"){
+                    this.inputValue = "";
+                }else if(this.todoReg.test(val.trim())){
+                    this.inputValue = val.trim().replace(this.todoReg,"TODO: ");
+                }
+            }
+        },
 
         methods: {
+
+            isTodo: function (str) {
+                return str.startsWith("TODO") ? '#ff6d15' : '#409EFF';
+            },
             isHttp: function (str) {
-                return str.startsWith("http://");
+                return str.startsWith("http");
             },
             flushData: function () {
                 let self = this;
@@ -188,21 +212,23 @@
                     .then(function () {
                         self.flushData();
                     }).catch(function (error) {
-                        self.flushData();
+                    self.flushData();
                 });
             },
 
             showInput() {
                 this.inputVisible = true;
+
                 this.$nextTick(_ => {
                     this.$refs.saveTagInput.$refs.input.focus();
+                    this.inputValue = "";
                 });
             },
 
             handleInputConfirm() {
                 let self = this;
                 let inputValue = this.inputValue;
-                if(inputValue.length){
+                if (inputValue.length) {
                     axios.post('/addTag', {'tag': inputValue})
                         .then(function () {
                             self.inputValue = '';
@@ -214,11 +240,40 @@
                             message: '新增失败（请检查该内容是否已存在）'
                         });
                     });
-                }else{
+                } else {
                     self.inputValue = '';
                     self.inputVisible = false;
                 }
+            },
 
+            editTag: function(tagIndex){
+                let self = this;
+                self.editTagIndex = tagIndex;
+                self.editValue = self.dynamicTags[tagIndex];
+                this.$nextTick(_ => {
+                    self.$refs.saveTagEdit[0].$refs.input.focus()
+                });
+            },
+
+            handleEditConfirm: function(){
+                let self = this;
+                let editValue = this.editValue;
+                if (editValue.length && editValue !== this.dynamicTags[this.editTagIndex]) {
+                    axios.post('/editTag', {'index': self.editTagIndex, 'content': self.editValue})
+                        .then(function () {
+                            self.editValue = '';
+                            self.editTagIndex = null;
+                            self.flushData();
+                        }).catch(function (error) {
+                        self.$message({
+                            type: 'error',
+                            message: '修改失败（请检查该内容是否已存在）'
+                        });
+                    });
+                } else {
+                    self.editValue = '';
+                    self.editTagIndex = null;
+                }
             }
         },
         mounted: function () {
@@ -228,6 +283,20 @@
             self.flushEvnt = setInterval(function () {
                 self.flushData()
             }, 5000);
+
+            document.onkeyup = function (event) {
+                var e = event || window.event || arguments.callee.caller.arguments[0];
+                if (e && e.keyCode === 78 && self.editTagIndex == null) { // 按 Esc
+                    if (!self.inputVisible) {
+                        self.inputVisible = true;
+
+                        self.$nextTick(_ => {
+                            self.$refs.saveTagInput.$refs.input.focus();
+                            self.inputValue = "";
+                        });
+                    }
+                }
+            };
         }
     });
 

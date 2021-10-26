@@ -49,6 +49,25 @@ def add_tag():
         abort(400)
 
 
+@app.route('/editTag', methods=['POST'])
+def edit_tag():
+    tag_index = request.json.get('index')
+    tag_content = request.json.get('content')
+    tags = json.loads(redis_cli.get('tags'))
+
+    for idx in range(len(tags)):
+        if tag_content == tags[idx]:
+            if tag_index != idx:
+                abort(400)
+
+    tags[tag_index] = tag_content
+    tags = sorted(tags, key=len)
+    tags = sort_tags_by_type(tags)
+    redis_cli.set('tags', json.dumps(tags))
+    return 'ok'
+
+
+
 @app.route('/rmTag', methods=['POST'])
 def rm_tag():
     target_tag = request.json.get('tag')
