@@ -13,22 +13,34 @@
             background-color: #f3f3f3;
         }
 
-        html, body, #app,.el-table, .el-upload  {
+        html, body, #app, .el-table, .el-upload {
             width: 100%;
         }
-        .el-upload{
+
+        .el-upload {
             height: 100%;
         }
 
-        #app > *{
+        #app > * {
             background-color: #f3f3f3;
         }
 
         .el-upload-dragger {
-            background: rgba(0,0,0,0);
+            background: rgba(0, 0, 0, 0);
             width: auto;
             height: auto;
             border: 0;
+        }
+        .opt-btn {
+            width: 5rem;
+            height: 2rem;
+            line-height: 0;
+            border-radius: 10px;
+            margin: 1rem 0 0 5px;
+            text-align: center;
+            cursor: pointer;
+            box-shadow: 1px 1px 6px 0 #b7b4b4;
+            color: gray;
         }
     </style>
 
@@ -37,18 +49,89 @@
 <div id="app" style="width: 90%;
     min-width: 1100px;
     min-height: 560px;
+    height: 100vh;
     padding-left: 5%;">
-    <div>
-        <i v-if="dir.length > 0" style="font-size: 21px;
+    <div style="width: 100%;display: flex; flex-direction: row; height: 68px;">
+        <div style="flex: 1">
+            <i v-if="dir.length > 0" style="font-size: 21px;
             cursor: pointer;
-            border: 2px solid #edebeb;
+            border: 1px solid #979797;
             border-radius: 99px;
-            color: gray;
-            box-shadow: rgb(158 158 158) 2px 4px 7px 0px;"
-            class="el-icon-back"
-            @click="stepBack"></i>
-        <p style="display:inline-block; font-size: 20px;color: #5a5a5a; margin-top: 20px">dir: [[dir]]</p>
+            color: gray;"
+               class="el-icon-back"
+               @click="stepBack"></i>
+            <p style="display:inline-block; font-size: 20px;color: #5a5a5a; margin-top: 20px; margin-left: 5px">dir: [[dir]]</p>
+        </div>
+        <div class="opt-btn">
+            <el-upload style="width: 100%; height: 100%"
+                       :action="'upload?dir=' + currDir"
+                       drag
+                       :show-file-list="false"
+                       :on-success="handleSuccess"
+                       :on-error="handleError"
+                       style="display: inline-block;width:58px;">
+                <p>upload</p>
+            </el-upload>
+        </div>
+
+        <div class="opt-btn"
+             @click="handleCreateFolder">
+            <p>new dir</p>
+        </div>
     </div>
+    <div style="width: 100%; height: calc(100% - 68px)">
+        <el-table
+                :data="fileData"
+                height="100%"
+                style="width: 100%;">
+            <el-table-column label="file name">
+                <template slot-scope="scope">
+                    <p v-if="!scope.row.isDir" @dblclick="handleDownload(scope.row)">[[ scope.row.fileName ]]</p>
+                    <p v-else @click="goToDir(scope.row.fileName)" style="color: blue;cursor: pointer">
+                        [[ scope.row.fileName]]</p>
+                </template>
+            </el-table-column>
+
+            <el-table-column label="size">
+                <template slot-scope="scope">
+                    <p v-if="!scope.row.isDir">[[ scope.row.size ]]</p>
+                </template>
+            </el-table-column>
+
+            <el-table-column label="date">
+                <template slot-scope="scope">
+                    <i class="el-icon-time"></i>
+                    <span style="margin-left: 10px">[[ scope.row.chgTime ]]</span>
+                </template>
+            </el-table-column>
+
+
+            <el-table-column label="operation">
+                <template slot-scope="scope">
+                    <el-button v-if="!scope.row.isDir"
+                               type="primary" round
+                               size="mini"
+                               @click="handleDownload(scope.row)">download
+                    </el-button>
+
+                    <el-button
+                            type="warning" round
+                            size="mini"
+                            @click="handleEdit(scope.row)">edit
+                    </el-button>
+
+                    <el-button
+                            type="danger" round
+                            size="mini"
+                            @click="handleDelete(scope.row)">delete
+                    </el-button>
+
+                </template>
+            </el-table-column>
+        </el-table>
+
+    </div>
+
     <el-dialog title="rename" :visible.sync="editVis">
         new file name：
         <el-input v-model="input"></el-input>
@@ -67,79 +150,7 @@
         </span>
     </el-dialog>
 
-    <el-table
-            :data="fileData"
-            style="width: 100%">
-        <el-table-column label="file name">
-            <template slot-scope="scope">
-                <p v-if="!scope.row.isDir" @dblclick="handleDownload(scope.row)">[[ scope.row.fileName ]]</p>
-                <p v-else @click="goToDir(scope.row.fileName)" style="color: blue;cursor: pointer">[[ scope.row.fileName]]</p>
-            </template>
-        </el-table-column>
 
-        <el-table-column label="size">
-            <template slot-scope="scope">
-                <p v-if="!scope.row.isDir">[[ scope.row.size ]]</p>
-            </template>
-        </el-table-column>
-
-        <el-table-column label="date">
-            <template slot-scope="scope">
-                <i class="el-icon-time"></i>
-                <span style="margin-left: 10px">[[ scope.row.chgTime ]]</span>
-            </template>
-        </el-table-column>
-
-
-        <el-table-column label="operation">
-            <template slot-scope="scope">
-                <el-button v-if="!scope.row.isDir"
-                        type="primary" round
-                        size="mini"
-                        @click="handleDownload(scope.row)">download
-                </el-button>
-
-                <el-button
-                        type="warning" round
-                        size="mini"
-                        @click="handleEdit(scope.row)">edit
-                </el-button>
-
-                <el-button
-                        type="danger" round
-                        size="mini"
-                        @click="handleDelete(scope.row)">delete
-                </el-button>
-
-            </template>
-        </el-table-column>
-    </el-table>
-
-    <div style="width: 10rem; height: 6rem; line-height: 4rem; position: absolute; left: 1rem; bottom: 1rem; border-radius: 10px; box-shadow: 5px 8px 15px 1px #b5b4b4;">
-        <el-upload style="width: 100%; height: 100%"
-                   :action="'upload?dir=' + currDir"
-                   drag
-                   :show-file-list="false"
-                   :on-success="handleSuccess"
-                   :on-error="handleError"
-                   style="display: inline-block;width:58px;">
-            <p>upload</p>
-        </el-upload>
-    </div>
-
-    <div style="width: 10rem;
-        height: 6rem;
-        line-height: 4rem;
-        position: absolute;
-        left: 12rem;
-        bottom: 1rem;
-        border-radius: 10px;
-        text-align: center;
-        cursor: pointer;
-        box-shadow: 5px 8px 15px 1px #b5b4b4;"
-         @click="handleCreateFolder">
-            <p>new dir</p>
-    </div>
 
 </div>
 
